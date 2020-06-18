@@ -54,6 +54,9 @@ export class Server {
         socket.broadcast.emit("update-user-list", {
           users: [socket.id]
         });
+        console.log(socket.id);
+      }else{
+        console.log("existingSocket");
       }
 
       socket.on("call-user", (data: any) => {

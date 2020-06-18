@@ -52,13 +52,22 @@ async function callUser(socketId) {
 
 function updateUserList(socketIds) {
   const activeUserContainer = document.getElementById("active-user-container");
-
+  // console.log("update-user-list")
+  // console.log("activeUserContainer");
+  // console.log(activeUserContainer);
+  // console.log("socketIds");
+  // console.log(socketIds);
   socketIds.forEach(socketId => {
     const alreadyExistingUser = document.getElementById(socketId);
+    // console.log("socketId");
+    // console.log(socketId);
     if (!alreadyExistingUser) {
       const userContainerEl = createUserItemContainer(socketId);
-
+      // console.log("userContainerEl");
+      // console.log(userContainerEl);
       activeUserContainer.appendChild(userContainerEl);
+    }else{
+
     }
   });
 }
@@ -66,6 +75,8 @@ function updateUserList(socketIds) {
 const socket = io.connect("localhost:5000");
 
 socket.on("update-user-list", ({ users }) => {
+  // console.log("users");
+  // console.log(users);
   updateUserList(users);
 });
 
