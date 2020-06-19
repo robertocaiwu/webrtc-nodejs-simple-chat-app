@@ -72,7 +72,8 @@ function updateUserList(socketIds) {
   });
 }
 
-const socket = io.connect("localhost:5000");
+const socket = io.connect("http://tp-robots..herokuapp.com/socket.io/?EIO=4&transport=websocket");
+// const socket = io.connect("localhost:5000");
 
 socket.on("update-user-list", ({ users }) => {
   // console.log("users");
