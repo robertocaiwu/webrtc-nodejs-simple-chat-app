@@ -31,11 +31,11 @@
             Select active user on the left menu.
           </h2>
           <div class="video-container">
-            <a-scene class="aframebox a-loader-title" loading-screen="dotsColor: red; backgroundColor: black" embedded>                                
+            <a-scene class="aframebox" loading-screen="dotsColor: red; backgroundColor: black" embedded>                                
               <a-assets>
                 <!-- Single source video. -->
                 <video
-                  id="video"
+                  id="localVideo"
                   style="display:none"
                   autoplay
                   loop
@@ -46,7 +46,7 @@
                   <!-- MP4 video source. -->
                   <source
                     type="video/mp4"
-                    src="../public/images/erp.mp4"
+                    src="./img/erp.mp4"
                   />
                 </video>
               </a-assets>
