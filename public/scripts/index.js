@@ -65,10 +65,10 @@ async function callUser(socketId) {
         to: socketId
       });
     } catch (e) {
-      console.log(`Failed to set session description: ${e.toString()}`);
+      console.error(`Failed to set session description: ${e.toString()}`);
     }
   } catch (e) {
-    console.log(`Failed to create offer: ${e.toString()}`);
+    console.error(`Failed to create offer: ${e.toString()}`);
   }
 }
 
@@ -159,18 +159,12 @@ peerConnection.addEventListener('connectionstatechange', event => {
     console.log('Peers connected!');
       // Peers connected!
   }else{
-    console.log('Unable to establish connection between peers.');
+    console.error('Unable to establish connection between peers.');
   }
 });
 
 peerConnection.addEventListener('icecandidate', event => {
-  try {
-    await (peerConnection.addIceCandidate(event.candidate));
-    console.log(`${peerConnection} addIceCandidate success`);
-  } catch (e) {
-    console.log(`${peerConnection} failed to add ICE Candidate: ${e.toString()}`);
-  }
-  console.log(`${peerConnection} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
+  onIceCandidate(peerConnection, event);
 });
 
 peerConnection.addEventListener('iceconnectionstatechange', event => {
@@ -179,6 +173,20 @@ peerConnection.addEventListener('iceconnectionstatechange', event => {
     console.log('ICE state change event: ', event);
   }
 });
+
+peerConnection.addEventListener('icecandidateerror', event => {
+  if (event.errorCode >= 300 && event.errorCode <= 699) {
+    console.error(
+      'STUN errors are in the range 300-699. See RFC 5389, section 15.6\
+       for a list of codes. TURN adds a few more error codes; see\
+       RFC 5766, section 15 for details.');
+  } else if (event.errorCode >= 700 && event.errorCode <= 799) {
+    console.error(
+      'Server could not be reached; a specific error number is\
+       provided but these are not yet specified.')
+  }
+});
+
 
 start();
 
@@ -246,7 +254,7 @@ async function onIceCandidate(pc, event) {
   } catch (e) {
     console.log(`${pc} failed to add ICE Candidate: ${e.toString()}`);
   }
-  console.log(`${getName(pc)} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
+  console.log(`${pc} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
 }
 
 function createStream(videoElement, s) {
