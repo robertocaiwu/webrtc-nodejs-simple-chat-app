@@ -27,30 +27,34 @@
           <h3 class="panel-title">Active Users:</h3>
         </div>
         <div class="video-chat-container">
-          <h2 class="talk-info" id="talking-with-info">
+          <h2 class="col-12 col-sm-4 talk-info" id="talking-with-info">
             Select active user on the left menu.
           </h2>
+          <!-- <div class="col-12 col-sm-4 button-container">
+            <button class="btn btn-danger btn-sm" id="stopCallButton">stop call</button>
+          </div> -->
           <div class="video-container">
-            <a-scene class="aframebox" loading-screen="dotsColor: red; backgroundColor: black" embedded>                                
+            <a-scene class="aframebox" vr-mode-ui="enabled: true" loading-screen="dotsColor: red; backgroundColor: black" embedded>                                
               <a-assets>
                 <!-- Single source video. -->
                 <video
-                  id="localVideo"
+                  id="remote-video"
                   style="display:none"
                   autoplay
                   loop
                   crossorigin="anonymous"
                   playsinline
                   webkit-playsinline
+                  controls
                 >
                   <!-- MP4 video source. -->
-                  <source
+                  <!-- <source
                     type="video/mp4"
                     src="./img/erp.mp4"
-                  />
+                  /> -->
                 </video>
               </a-assets>
-              <a-videosphere rotation="0 270 0" src="#localVideo" ></a-videosphere> 
+              <a-videosphere rotation="0 270 0" src="#remote-video" ></a-videosphere> 
               
               <a-camera user-height="0" 
                   wasd-controls="acceleration:100"
@@ -61,12 +65,21 @@
                   arrow-key-rotation>
               </a-camera>
           </a-scene>
-            <!-- <video autoplay class="remote-video" id="remote-video"></video> -->
             <video autoplay muted class="local-video" id="local-video"></video>
+            <video 
+              crossorigin 
+              controls
+              class="erp-video" id="erp-video">
+                <source
+                  type="video/mp4"
+                  src="./img/erp.mp4"
+                />
+            </video>
           </div>
         </div>
       </div>
     </div>
     <script src="./scripts/index.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
   </body>
 </html>
