@@ -4,6 +4,10 @@ let localStream;
 let remoteStream;
 let erpstream;
 let stream;
+const offerOptions = {
+  offerToReceiveAudio: 1,
+  offerToReceiveVideo: 1
+};
 
 const existingCalls = [];
 
@@ -47,24 +51,25 @@ function createUserItemContainer(socketId) {
 }
 
 async function callUser(socketId) {
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(new RTCSessionDescription(offer));
+  
+  try {
+    console.log('pc1 createOffer start');
+    const offer = await peerConnection.createOffer(offerOptions);
+    console.log(`Offer from pc1\n${offer.sdp}`);
+    try {
+      await peerConnection.setLocalDescription(new RTCSessionDescription(offer));
+      console.log(`${peerConnection} setLocalDescription complete`);
 
-  peerConnection.addEventListener('icecandidate', event => {
-      if (event.candidate) {
-          signalingChannel.send({'new-ice-candidate': event.candidate});
-          console.log("ICE candidate found: ", event.candidate);
-      }else{
-        console.log("ICE candidate not found.");
-      }
-  });
-
-  socket.emit("call-user", {
-    offer,
-    to: socketId
-  });
-
-
+      socket.emit("call-user", {
+        offer,
+        to: socketId
+      });
+    } catch (e) {
+      console.log(`Failed to set session description: ${e.toString()}`);
+    }
+  } catch (e) {
+    console.log(`Failed to create offer: ${e.toString()}`);
+  }
 }
 
 function updateUserList(socketIds) {
@@ -81,7 +86,6 @@ function updateUserList(socketIds) {
   });
 }
 
-start();
 
 const socket = io.connect(window.location.host);
 // const socket = io.connect("http://localhost:5000");
@@ -116,7 +120,7 @@ socket.on("call-made", async data => {
   await peerConnection.setRemoteDescription(
     new RTCSessionDescription(data.offer)
   );
-  const answer = await peerConnection.createAnswer();
+  const answer = await peerConnection.createAnswer(offerOptions);
   await peerConnection.setLocalDescription(new RTCSessionDescription(answer));
 
   socket.emit("make-answer", {
@@ -145,6 +149,7 @@ socket.on("call-rejected", data => {
 peerConnection.ontrack = function({ streams: [stream] }) {
   const remoteVideo = document.getElementById("remote-video");
   if (remoteVideo) {
+    console.log('Received remote stream!');
     remoteVideo.srcObject = stream;
   }
 };
@@ -158,6 +163,24 @@ peerConnection.addEventListener('connectionstatechange', event => {
   }
 });
 
+peerConnection.addEventListener('icecandidate', event => {
+  try {
+    await (peerConnection.addIceCandidate(event.candidate));
+    console.log(`${peerConnection} addIceCandidate success`);
+  } catch (e) {
+    console.log(`${peerConnection} failed to add ICE Candidate: ${e.toString()}`);
+  }
+  console.log(`${peerConnection} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
+});
+
+peerConnection.addEventListener('iceconnectionstatechange', event => {
+  if (peerConnection) {
+    console.log(`peerConnection ICE state: ${peerConnection.iceConnectionState}`);
+    console.log('ICE state change event: ', event);
+  }
+});
+
+start();
 
 async function start() {
   // Starts the camera as soon as the page loads.
