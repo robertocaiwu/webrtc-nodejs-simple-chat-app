@@ -195,52 +195,25 @@ async function start() {
   console.log('Requesting local stream');
   try {
     
-    const localStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
     
     const localVideo = document.getElementById("local-video");
     const erpVideo = document.getElementById("erp-video");
     if (localVideo) {
-      localVideo.srcObject = localStream;
+      localVideo.srcObject = stream;
     }
-    // localStream = localStream;
-
-    // erpVideo.oncanplay = createStream;
-    // if (erpVideo.readyState >= 3) { // HAVE_FUTURE_DATA
-    //   // Video is already ready to play, call createStream in case oncanplay
-    //   // fired before we registered the event handler.
-    //   createStream(erpVideo);
-    // }
-
-    erpVideo.onplaying = e => {
-      erpVideo.onplaying = null;
-      if (erpVideo.captureStream) {
-        stream = erpVideo.captureStream();
-        console.log('Captured stream with captureStream', stream);
-      } else if (erpVideo.mozCaptureStream) {
-        stream = erpVideo.mozCaptureStream();
-        console.log('Captured stream with mozCaptureStream()', stream);
-      } else {
-        console.log('unsupported browser');
-        return;
-      }
-      
-      const videoTracks = stream.getVideoTracks();
-      const audioTracks = stream.getAudioTracks();
-      if (videoTracks.length > 0) {
-        console.log(`Using video device: ${videoTracks[0].label}`);
-      }
-      if (audioTracks.length > 0) {
-        console.log(`Using audio device: ${audioTracks[0].label}`);
-      }
-
-      stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
-    };
-    erpVideo.onended = e => {
-      console.log('Ended. Looping back in time.');
-      erpVideo.load();
-      erpVideo.play();
+    localStream = stream;
+    const videoTracks = stream.getVideoTracks();
+    const audioTracks = stream.getAudioTracks();
+    if (videoTracks.length > 0) {
+      console.log(`Using video device: ${videoTracks[0].label}`);
     }
-    erpVideo.play();
+    if (audioTracks.length > 0) {
+      console.log(`Using audio device: ${audioTracks[0].label}`);
+    }
+
+    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
 
   } catch (e) {
     console.warn(`getUserMedia() error: ${e.message}`);
