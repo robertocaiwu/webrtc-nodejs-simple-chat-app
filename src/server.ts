@@ -79,6 +79,15 @@ export class Server {
         });
       });
 
+      socket.on("handle-ice-candidates", data => {
+        socket.to(data.to).emit("receive-ice-candidates", {
+          socket: socket.id,
+          candidate: data.candidate,
+          label: data.label,
+          id: data.id
+        });
+      });
+
       socket.on("disconnect", () => {
         this.activeSockets = this.activeSockets.filter(
           existingSocket => existingSocket !== socket.id

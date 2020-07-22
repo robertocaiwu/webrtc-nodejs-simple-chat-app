@@ -17,39 +17,6 @@ const pcConfiguration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}
 
 const peerConnection = new RTCPeerConnection(pcConfiguration);
 
-function unselectUsersFromList() {
-  const alreadySelectedUser = document.querySelectorAll(
-    ".active-user.active-user--selected"
-  );
-
-  alreadySelectedUser.forEach(el => {
-    el.setAttribute("class", "active-user");
-  });
-}
-
-function createUserItemContainer(socketId) {
-  const userContainerEl = document.createElement("div");
-
-  const usernameEl = document.createElement("p");
-
-  userContainerEl.setAttribute("class", "active-user");
-  userContainerEl.setAttribute("id", socketId);
-  usernameEl.setAttribute("class", "username");
-  usernameEl.innerHTML = `Socket: ${socketId}`;
-
-  userContainerEl.appendChild(usernameEl);
-
-  userContainerEl.addEventListener("click", () => {
-    unselectUsersFromList();
-    userContainerEl.setAttribute("class", "active-user active-user--selected");
-    const talkingWithInfo = document.getElementById("talking-with-info");
-    talkingWithInfo.innerHTML = `Talking with: "Socket: ${socketId}"`;
-    callUser(socketId);
-  });
-
-  return userContainerEl;
-}
-
 async function callUser(socketId) {
   
   try {
@@ -59,6 +26,10 @@ async function callUser(socketId) {
     try {
       await peerConnection.setLocalDescription(new RTCSessionDescription(offer));
       console.log(`${peerConnection} setLocalDescription complete`);
+
+      peerConnection.addEventListener('icecandidate', event => {
+        onIceCandidate(peerConnection, event, socketId);
+      });
 
       socket.emit("call-user", {
         offer,
@@ -71,21 +42,6 @@ async function callUser(socketId) {
     console.error(`Failed to create offer: ${e.toString()}`);
   }
 }
-
-function updateUserList(socketIds) {
-  const activeUserContainer = document.getElementById("active-user-container");
-
-  socketIds.forEach(socketId => {
-    const alreadyExistingUser = document.getElementById(socketId);
-    if (!alreadyExistingUser) {
-      const userContainerEl = createUserItemContainer(socketId);
-      activeUserContainer.appendChild(userContainerEl);
-    }else{
-
-    }
-  });
-}
-
 
 const socket = io.connect(window.location.host);
 // const socket = io.connect("http://localhost:5000");
@@ -146,6 +102,12 @@ socket.on("call-rejected", data => {
   unselectUsersFromList();
 });
 
+socket.on("receive-ice-candidates", data => {
+  // var candidate = new RTCIceCandidate({sdpMid:data.id ,sdpMLineIndex:data.    label, candidate:data.candidate});
+  peerConnection.addIceCandidate(data.candidate);
+});
+
+
 peerConnection.ontrack = function({ streams: [stream] }) {
   const remoteVideo = document.getElementById("remote-video");
   if (remoteVideo) {
@@ -163,9 +125,6 @@ peerConnection.addEventListener('connectionstatechange', event => {
   }
 });
 
-peerConnection.addEventListener('icecandidate', event => {
-  onIceCandidate(peerConnection, event);
-});
 
 peerConnection.addEventListener('iceconnectionstatechange', event => {
   if (peerConnection) {
@@ -204,13 +163,6 @@ async function start() {
     }
     // localStream = localStream;
 
-    // erpVideo.oncanplay = createStream;
-    // if (erpVideo.readyState >= 3) { // HAVE_FUTURE_DATA
-    //   // Video is already ready to play, call createStream in case oncanplay
-    //   // fired before we registered the event handler.
-    //   createStream(erpVideo);
-    // }
-
     erpVideo.onplaying = e => {
       erpVideo.onplaying = null;
       if (erpVideo.captureStream) {
@@ -247,14 +199,19 @@ async function start() {
   }
 }
 
-async function onIceCandidate(pc, event) {
+async function onIceCandidate(pc, event, socketId) {
   try {
-    await (pc.addIceCandidate(event.candidate));
-    console.log(`${pc} addIceCandidate success`);
+    // await (pc.addIceCandidate(event.candidate));
+    socket.emit("handle-ice-candidates", {
+      candidate: event.candidate,
+      label: event.candidate.sdpMLineIndex, 
+      id: event.candidate.sdpMid,
+      to: socketId
+    });
+    console.log(`Sending IceCandidate to user: ${socketId}`);
   } catch (e) {
-    console.log(`${pc} failed to add ICE Candidate: ${e.toString()}`);
+    console.log(`${peerConnection} failed to add ICE Candidate: ${e.toString()}`);
   }
-  console.log(`${pc} ICE candidate:\n${event.candidate ? event.candidate.candidate : '(null)'}`);
 }
 
 function createStream(videoElement, s) {
@@ -273,4 +230,51 @@ function createStream(videoElement, s) {
   } else {
     console.log('captureStream() not supported');
   }
+}
+
+function updateUserList(socketIds) {
+  const activeUserContainer = document.getElementById("active-user-container");
+
+  socketIds.forEach(socketId => {
+    const alreadyExistingUser = document.getElementById(socketId);
+    if (!alreadyExistingUser) {
+      const userContainerEl = createUserItemContainer(socketId);
+      activeUserContainer.appendChild(userContainerEl);
+    }else{
+
+    }
+  });
+}
+
+function unselectUsersFromList() {
+  const alreadySelectedUser = document.querySelectorAll(
+    ".active-user.active-user--selected"
+  );
+
+  alreadySelectedUser.forEach(el => {
+    el.setAttribute("class", "active-user");
+  });
+}
+
+function createUserItemContainer(socketId) {
+  const userContainerEl = document.createElement("div");
+
+  const usernameEl = document.createElement("p");
+
+  userContainerEl.setAttribute("class", "active-user");
+  userContainerEl.setAttribute("id", socketId);
+  usernameEl.setAttribute("class", "username");
+  usernameEl.innerHTML = `Socket: ${socketId}`;
+
+  userContainerEl.appendChild(usernameEl);
+
+  userContainerEl.addEventListener("click", () => {
+    unselectUsersFromList();
+    userContainerEl.setAttribute("class", "active-user active-user--selected");
+    const talkingWithInfo = document.getElementById("talking-with-info");
+    talkingWithInfo.innerHTML = `Talking with: "Socket: ${socketId}"`;
+    callUser(socketId);
+  });
+
+  return userContainerEl;
 }
