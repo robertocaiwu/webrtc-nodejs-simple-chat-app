@@ -51,7 +51,7 @@ body {
 
 .panel-title {
   margin: 10px 0 0 0;
-  padding-left: 30px;
+  padding-left: 10px;
   font-weight: 500;
   font-size: 18px;
   border-bottom: 1px solid #cddfe7;
@@ -63,6 +63,7 @@ body {
   border-bottom: 1px solid #cddfe7;
   cursor: pointer;
   user-select: none;
+  word-wrap: break-word;
 }
 
 .active-user:hover {
